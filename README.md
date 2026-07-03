@@ -53,24 +53,3 @@ The install script will:
 | `Print` | Screenshot (region select) |
 | `Super+1..0` | Switch workspace |
 | `Super+Shift+R` | Reload i3 |
-
-## 📝 Notes
-
-- Built and tested on Arch Linux inside **VMware** (X11 chosen over Wayland for proper host↔guest clipboard support via `autocutsel` + `open-vm-tools`).
-- Wallpaper path: `~/Pictures/wallpapers/` (referenced by feh in i3 config).
-- Display manager: LightDM with GTK greeter (optional, enable with `sudo systemctl enable lightdm`).
-
-## 📂 Structure
-dotfiles/
-├── i3/          # i3 config
-├── kitty/       # kitty terminal
-├── polybar/     # status bar + power menu script
-├── rofi/        # launcher theme
-├── picom/       # compositor
-├── dunst/       # notifications
-├── starship/    # prompt
-├── gtk/         # GTK theme settings
-├── bash/        # .bashrc, .bash_profile, .xprofile
-├── pkglist.txt      # official packages
-├── aur-pkglist.txt  # AUR packages
-└── install.sh       # installer script
