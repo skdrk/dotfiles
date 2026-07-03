@@ -1,0 +1,35 @@
+add_newline = false
+
+format = "$os$username$directory$git_branch$git_status$character"
+
+[os]
+disabled = false
+format = "[$symbol]($style)"
+style = "bold blue"
+
+[os.symbols]
+Arch = "󰣇 "
+
+[username]
+show_always = true
+style_user = "bold cyan"
+format = "[$user]($style) "
+
+[directory]
+style = "bold blue"
+format = "[$path]($style) "
+truncation_length = 3
+truncation_symbol = "…/"
+
+[git_branch]
+symbol = " "
+style = "bold purple"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+style = "bold red"
+format = "([$all_status$ahead_behind]($style) )"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"

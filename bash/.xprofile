@@ -1,0 +1,3 @@
+autocutsel -selection CLIPBOARD -fork
+autocutsel -selection PRIMARY -fork
+/usr/bin/vmtoolsd -n vmusr &

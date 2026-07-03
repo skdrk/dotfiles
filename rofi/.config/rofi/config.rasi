@@ -1,0 +1,92 @@
+configuration {
+    modi: "drun,run,window";
+    show-icons: true;
+    icon-theme: "Papirus";
+    display-drun: " Apps";
+    display-run: " Run";
+    display-window: " Windows";
+    drun-display-format: "{name}";
+    font: "JetBrainsMono Nerd Font 11";
+}
+
+@theme "/dev/null"
+
+* {
+    bg:       #1a1b26;
+    bg-alt:   #24283b;
+    fg:       #c0caf5;
+    fg-alt:   #565f89;
+    blue:     #7aa2f7;
+    purple:   #bb9af7;
+    cyan:     #7dcfff;
+
+    background-color: transparent;
+    text-color: @fg;
+    spacing: 0;
+}
+
+window {
+    transparency: "real";
+    background-color: @bg;
+    border: 2px;
+    border-color: @blue;
+    border-radius: 12px;
+    width: 600px;
+    location: center;
+    anchor: center;
+}
+
+mainbox {
+    padding: 12px;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    background-color: @bg-alt;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 0 0 12px 0;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    text-color: @purple;
+    margin: 0 10px 0 0;
+}
+
+entry {
+    placeholder: "Buscar...";
+    placeholder-color: @fg-alt;
+}
+
+listview {
+    lines: 8;
+    columns: 1;
+    scrollbar: false;
+    spacing: 4px;
+}
+
+element {
+    padding: 8px 12px;
+    border-radius: 8px;
+    spacing: 10px;
+}
+
+element normal.normal {
+    background-color: transparent;
+    text-color: @fg;
+}
+
+element selected.normal {
+    background-color: @blue;
+    text-color: @bg;
+}
+
+element-icon {
+    size: 22px;
+    vertical-align: 0.5;
+}
+
+element-text {
+    vertical-align: 0.5;
+}
