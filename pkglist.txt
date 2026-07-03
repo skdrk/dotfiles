@@ -8,7 +8,6 @@ brightnessctl
 btop
 btrfs-progs
 cliphist
-dmenu
 dunst
 ethtool
 eza
@@ -86,7 +85,6 @@ xclip
 xdg-desktop-portal-wlr
 xfce4-settings
 xorg-server
-xorg-xeyes
 xorg-xinit
 xorg-xrandr
 xorg-xwayland
