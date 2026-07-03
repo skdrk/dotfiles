@@ -1,6 +1,4 @@
 7zip
-arc-gtk-theme
-autocutsel
 autotiling
 awww
 base
@@ -33,6 +31,7 @@ i3-wm
 i3lock
 i3status
 kitty
+less
 libpulse
 lightdm
 lightdm-gtk-greeter
@@ -51,8 +50,6 @@ noto-fonts-extra
 nwg-look
 open-vm-tools
 papirus-icon-theme
-paru
-paru-debug
 pavucontrol
 picom
 pipewire
@@ -72,7 +69,6 @@ sudo
 thunar
 thunar-archive-plugin
 thunar-volman
-tokyonight-gtk-theme-git
 ttf-dejavu
 ttf-jetbrains-mono-nerd
 ttf-liberation

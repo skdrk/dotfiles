@@ -1,13 +1,70 @@
 #!/usr/bin/env bash
-# Script para desplegar los dotfiles en un Arch nuevo
-cd "$(dirname "$0")"
+# ==============================================
+#  Dotfiles installer - Arch Linux + i3 setup
+# ==============================================
+set -e
 
-echo "==> Instalando paquetes de repos oficiales..."
-sudo pacman -S --needed - < pkglist.txt
+DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$DOTFILES_DIR"
 
-echo "==> Desplegando configs con stow..."
-for dir in i3 kitty polybar rofi picom dunst starship gtk bash; do
-    stow -v "$dir"
+STOW_PACKAGES=(i3 kitty polybar rofi picom dunst starship gtk bash)
+
+info()  { printf '\033[1;34m==>\033[0m %s\n' "$1"; }
+warn()  { printf '\033[1;33m==>\033[0m %s\n' "$1"; }
+
+# --- 1. Official repo packages ---
+if [[ -f pkglist.txt ]]; then
+    info "Installing official repo packages..."
+    sudo pacman -Syu --needed --noconfirm - < pkglist.txt || warn "Some packages failed (maybe AUR ones in list), continuing..."
+else
+    warn "pkglist.txt not found, skipping official packages."
+fi
+
+# --- 2. Install paru (AUR helper) if missing ---
+if ! command -v paru &>/dev/null; then
+    info "Installing paru (AUR helper)..."
+    sudo pacman -S --needed --noconfirm git base-devel
+    tmpdir=$(mktemp -d)
+    git clone https://aur.archlinux.org/paru.git "$tmpdir/paru"
+    (cd "$tmpdir/paru" && makepkg -si --noconfirm)
+    rm -rf "$tmpdir"
+fi
+
+# --- 3. AUR packages ---
+if [[ -f aur-pkglist.txt ]]; then
+    info "Installing AUR packages..."
+    paru -S --needed --noconfirm - < aur-pkglist.txt || warn "Some AUR packages failed, review manually."
+else
+    warn "aur-pkglist.txt not found, skipping AUR packages."
+fi
+
+# --- 4. Deploy dotfiles with stow ---
+info "Deploying dotfiles with stow..."
+sudo pacman -S --needed --noconfirm stow
+
+for pkg in "${STOW_PACKAGES[@]}"; do
+    if [[ -d "$pkg" ]]; then
+        # Remove conflicting real files (keep symlinks) so stow can link
+        while IFS= read -r -d '' file; do
+            rel="${file#"$pkg"/}"
+            target="$HOME/$rel"
+            if [[ -e "$target" && ! -L "$target" ]]; then
+                warn "Backing up existing $target -> $target.bak"
+                mv "$target" "$target.bak"
+            fi
+        done < <(find "$pkg" -type f -print0)
+        stow -v "$pkg"
+        info "Stowed: $pkg"
+    else
+        warn "Package dir '$pkg' not found, skipping."
+    fi
 done
 
-echo "==> Listo. Reinicia i3 con Super+Shift+R"
+# --- 5. Post-install notes ---
+info "Done!"
+echo ""
+echo "  Next steps:"
+echo "  - Reboot or reload i3 (Super+Shift+R)"
+echo "  - If using LightDM: sudo systemctl enable lightdm"
+echo "  - Copy your wallpaper to ~/Pictures/wallpapers/ (feh points there)"
+echo ""

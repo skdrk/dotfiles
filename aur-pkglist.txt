@@ -1,0 +1,5 @@
+arc-gtk-theme
+autocutsel
+paru
+paru-debug
+tokyonight-gtk-theme-git
