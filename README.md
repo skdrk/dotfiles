@@ -27,7 +27,7 @@ On a fresh Arch Linux install:
 
 ```bash
 sudo pacman -S git
-git clone https://github.com/YOUR_USERNAME/dotfiles.git ~/dotfiles
+git clone https://github.com/skdrk/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
 ```
