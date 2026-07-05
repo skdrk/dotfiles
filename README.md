@@ -6,6 +6,8 @@ My personal Arch Linux configuration: **i3 + polybar + kitty + rofi**, themed wi
 ![i3](https://img.shields.io/badge/WM-i3-blue)
 ![X11](https://img.shields.io/badge/Display-X11-green)
 
+<img width="1920" height="963" alt="arch" src="https://github.com/user-attachments/assets/0a53b79a-c327-47f1-b87b-8356fa3f2c23" />
+
 ## 📦 What's included
 
 | Component | Tool |
