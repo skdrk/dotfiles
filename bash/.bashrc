@@ -17,3 +17,11 @@ alias cat='bat'
 alias grep='rg'
 eval "$(zoxide init bash)"
 fastfetch
+. "$HOME/.cargo/env"
+
+# Created by `pipx` on 2026-07-03 21:07:41
+export PATH="$PATH:/home/skdrk/.local/bin"
+[[ $- == *i* ]] && source /usr/share/blesh/ble.sh
+bleopt complete_auto_history=1
+_ble_complete_auto_source=(history)
+ble-face auto_complete='fg=240'

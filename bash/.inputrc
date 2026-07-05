@@ -1,0 +1,11 @@
+# Autocompletado ignorando mayúsculas/minúsculas
+set completion-ignore-case on
+
+# Trata - y _ como equivalentes al completar
+set completion-map-case on
+
+# Muestra todas las opciones directamente si hay varias
+set show-all-if-ambiguous on
+
+# Incluir el .inputrc del sistema
+$include /etc/inputrc

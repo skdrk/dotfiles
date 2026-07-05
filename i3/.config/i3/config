@@ -13,7 +13,6 @@ exec --no-startup-id dex --autostart --environment i3
 exec --no-startup-id nm-applet
 exec --no-startup-id picom --config ~/.config/picom/picom.conf
 exec --no-startup-id autocutsel -selection CLIPBOARD -fork
-exec --no-startup-id autocutsel -selection PRIMARY -fork
 exec --no-startup-id /usr/bin/vmtoolsd -n vmusr
 # Wallpaper (color sólido; cambia por feh --bg-scale /ruta/imagen.jpg si tienes una)
 exec_always --no-startup-id feh --bg-scale ~/Pictures/wallpapers/wallhaven-qrl7mr.jpg 

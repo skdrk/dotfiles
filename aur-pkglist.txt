@@ -1,5 +1,11 @@
 arc-gtk-theme
 autocutsel
+blesh-git
+dirsearch
+enum4linux
+ffuf
+kerbrute-bin
 paru
 paru-debug
+polenum
 tokyonight-gtk-theme-git
