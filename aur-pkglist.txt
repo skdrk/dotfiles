@@ -8,4 +8,13 @@ kerbrute-bin
 paru
 paru-debug
 polenum
+ruby-evil-winrm
+ruby-gssapi
+ruby-gyoku
+ruby-little-plugger
+ruby-logging
+ruby-nori
+ruby-rubyntlm
+ruby-winrm
+ruby-winrm-fs
 tokyonight-gtk-theme-git
