@@ -7,7 +7,7 @@ set -e
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DOTFILES_DIR"
 
-STOW_PACKAGES=(i3 kitty polybar rofi picom dunst starship gtk bash)
+STOW_PACKAGES=(i3 kitty polybar rofi picom dunst starship gtk bash wallpapers)
 
 info()  { printf '\033[1;34m==>\033[0m %s\n' "$1"; }
 warn()  { printf '\033[1;33m==>\033[0m %s\n' "$1"; }
@@ -15,7 +15,7 @@ warn()  { printf '\033[1;33m==>\033[0m %s\n' "$1"; }
 # --- 1. Official repo packages ---
 if [[ -f pkglist.txt ]]; then
     info "Installing official repo packages..."
-    sudo pacman -Syu --needed --noconfirm - < pkglist.txt || warn "Some packages failed (maybe AUR ones in list), continuing..."
+    sudo pacman -Syu --needed --noconfirm - < pkglist.txt || warn "Some packages failed, continuing..."
 else
     warn "pkglist.txt not found, skipping official packages."
 fi
@@ -38,13 +38,22 @@ else
     warn "aur-pkglist.txt not found, skipping AUR packages."
 fi
 
-# --- 4. Deploy dotfiles with stow ---
+# --- 4. Python tools via pipx ---
+if [[ -f pipx-pkglist.txt ]]; then
+    info "Installing Python tools via pipx..."
+    sudo pacman -S --needed --noconfirm python-pipx rust
+    while IFS= read -r tool; do
+        [[ -n "$tool" ]] && pipx install "$tool" || warn "pipx failed for $tool"
+    done < pipx-pkglist.txt
+    pipx ensurepath
+fi
+
+# --- 5. Deploy dotfiles with stow ---
 info "Deploying dotfiles with stow..."
 sudo pacman -S --needed --noconfirm stow
 
 for pkg in "${STOW_PACKAGES[@]}"; do
     if [[ -d "$pkg" ]]; then
-        # Remove conflicting real files (keep symlinks) so stow can link
         while IFS= read -r -d '' file; do
             rel="${file#"$pkg"/}"
             target="$HOME/$rel"
@@ -60,11 +69,12 @@ for pkg in "${STOW_PACKAGES[@]}"; do
     fi
 done
 
-# --- 5. Post-install notes ---
+# --- 6. Post-install notes ---
 info "Done!"
 echo ""
 echo "  Next steps:"
 echo "  - Reboot or reload i3 (Super+Shift+R)"
-echo "  - If using LightDM: sudo systemctl enable lightdm"
-echo "  - Copy your wallpaper to ~/Pictures/wallpapers/ (feh points there)"
+echo "  - Enable login manager: sudo systemctl enable lightdm"
+echo "  - Wallpaper is at ~/.config/wallpapers/ (referenced by i3 config)"
+echo "  - Open a new terminal so pipx PATH takes effect"
 echo ""

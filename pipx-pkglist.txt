@@ -1,2 +1,5 @@
-impacket 0.13.1
-netexec 1.5.1+476.d9871c5a
+certipy-ad
+evil-winrm-py
+impacket
+netexec
+pywhisker
