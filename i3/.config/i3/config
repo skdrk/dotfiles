@@ -14,8 +14,8 @@ exec --no-startup-id nm-applet
 exec --no-startup-id picom --config ~/.config/picom/picom.conf
 exec --no-startup-id autocutsel -selection CLIPBOARD -fork
 exec --no-startup-id /usr/bin/vmtoolsd -n vmusr
-# Wallpaper (color sólido; cambia por feh --bg-scale ~/.config/wallpapers/test.png
-exec_always --no-startup-id feh --bg-scale ~/.config/wallpapers/test.png
+# Wallpaper (color sólido; cambia por feh --bg-scale ~/.config/wallpapers/wallhaven-qrl7mr.jpg
+exec_always --no-startup-id feh --bg-scale ~/.config/wallpapers/wallhaven-qrl7mr.jpg
 
 # ─── Gaps (espacio entre ventanas) ───
 gaps inner 8
