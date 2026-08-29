@@ -9,3 +9,7 @@ set show-all-if-ambiguous on
 
 # Incluir el .inputrc del sistema
 $include /etc/inputrc
+
+# Alt+Retroceso borra la palabra anterior (igual que Ctrl+W)
+"\e\C-?": unix-word-rubout
+"\e\C-h": unix-word-rubout

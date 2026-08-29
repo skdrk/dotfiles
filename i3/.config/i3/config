@@ -137,8 +137,10 @@ exec_always --no-startup-id ~/.config/polybar/launch.sh
 bindsym Print exec --no-startup-id flameshot gui
 # Screenshot pantalla completa con Shift+Impr Pant
 bindsym Shift+Print exec --no-startup-id flameshot full -p ~/Pictures
-# Bloquear pantalla
-bindsym $mod+shift+x exec --no-startup-id i3lock -c 1a1b26
+# Bloquear pantalla (usa el mismo fondo que el escritorio)
+bindsym $mod+shift+x exec --no-startup-id ~/.config/i3/scripts/lock.sh
+# Cambiar fondo de pantalla aleatoriamente
+bindsym $mod+shift+o exec --no-startup-id ~/.config/i3/scripts/random-wallpaper.sh
 # Gestor de archivos
 bindsym $mod+shift+f exec --no-startup-id thunar
 # Menú de power
