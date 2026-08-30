@@ -21,6 +21,9 @@ fastfetch
 
 # Created by `pipx` on 2026-07-03 21:07:41
 export PATH="$PATH:/home/skdrk/.local/bin"
+
+# HiDPI scaling para apps Qt5 (Havoc client) en pantalla 4K
+export QT_SCALE_FACTOR=1.15
 [[ $- == *i* ]] && source /usr/share/blesh/ble.sh
 bleopt complete_auto_history=1
 _ble_complete_auto_source=(history)

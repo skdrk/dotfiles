@@ -1,2 +1,10 @@
 autocutsel -selection CLIPBOARD -fork
 /usr/bin/vmtoolsd -n vmusr &
+
+# --- Escalado HiDPI (pantalla 4K sin EDID, VM) ---
+[ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
+
+export GDK_SCALE=2
+export GDK_DPI_SCALE=0.5
+export QT_AUTO_SCREEN_SCALE_FACTOR=1
+export _JAVA_OPTIONS="-Dsun.java2d.uiScale=2"
