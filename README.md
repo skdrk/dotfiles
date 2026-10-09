@@ -34,12 +34,15 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-The install script will:
+The install script is **idempotent** — it checks what's already present and installs only what's missing. It will:
 
-1. Install all official repo packages (`pkglist.txt`)
+1. Install missing official repo packages (`pkglist.txt`)
 2. Install [paru](https://github.com/Morganamilo/paru) (AUR helper) if missing
-3. Install AUR packages (`aur-pkglist.txt`)
+3. Install missing AUR packages (`aur-pkglist.txt`) and pipx tools (`pipx-pkglist.txt`)
 4. Deploy all configs using [GNU Stow](https://www.gnu.org/software/stow/) (existing files are backed up as `.bak`)
+5. Enable the required services (`lightdm`, `NetworkManager`, `docker`, audio, `vmtoolsd` on VMware) and set `graphical.target` as default, so the GUI loads on every boot
+
+No manual steps are needed afterwards — reboot (or `sudo systemctl start lightdm`) and you get the login screen.
 
 ## ⌨️ Keybindings
 

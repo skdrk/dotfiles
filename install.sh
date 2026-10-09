@@ -1,80 +1,165 @@
 #!/usr/bin/env bash
 # ==============================================
 #  Dotfiles installer - Arch Linux + i3 setup
+#  Idempotente: comprueba qué falta e instala solo eso
+#  (o todo, si no hay nada), despliega los dotfiles y
+#  deja habilitados los servicios para que la interfaz
+#  gráfica arranque en cada reboot.
 # ==============================================
-set -e
+set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DOTFILES_DIR"
 
 STOW_PACKAGES=(i3 kitty polybar rofi picom dunst starship gtk bash wallpapers)
 
-info()  { printf '\033[1;34m==>\033[0m %s\n' "$1"; }
-warn()  { printf '\033[1;33m==>\033[0m %s\n' "$1"; }
+# Servicios de sistema a habilitar (se omiten los que no existan en el sistema).
+SYSTEM_SERVICES=(NetworkManager.service lightdm.service docker.service snapper-timeline.timer)
+# Servicios solo relevantes dentro de una VM VMware.
+VM_SERVICES=(vmtoolsd.service)
+# Servicios de usuario (audio).
+USER_SERVICES=(pipewire.socket pipewire-pulse.socket wireplumber.service)
 
-# --- 1. Official repo packages ---
-if [[ -f pkglist.txt ]]; then
-    info "Installing official repo packages..."
-    sudo pacman -Syu --needed --noconfirm - < pkglist.txt || warn "Some packages failed, continuing..."
-else
-    warn "pkglist.txt not found, skipping official packages."
+info() { printf '\033[1;34m==>\033[0m %s\n' "$1"; }
+warn() { printf '\033[1;33m==>\033[0m %s\n' "$1"; }
+ok()   { printf '\033[1;32m==>\033[0m %s\n' "$1"; }
+
+# --- 0. Comprobaciones previas ---
+if [[ $EUID -eq 0 ]]; then
+    warn "No ejecutes este script como root. Lánzalo con tu usuario; pedirá sudo cuando haga falta."
+    exit 1
 fi
 
-# --- 2. Install paru (AUR helper) if missing ---
+info "Refrescando base de datos de pacman y asegurando herramientas base..."
+sudo pacman -Sy --needed --noconfirm git base-devel stow >/dev/null
+
+# --- 1. Paquetes oficiales (pacman) ---
+if [[ -f pkglist.txt ]]; then
+    mapfile -t want < <(grep -vE '^\s*(#|$)' pkglist.txt)
+    missing=()
+    for p in "${want[@]}"; do
+        pacman -Qq "$p" &>/dev/null || missing+=("$p")
+    done
+    if (( ${#missing[@]} == 0 )); then
+        ok "Paquetes oficiales: ya están los ${#want[@]}."
+    else
+        info "Paquetes oficiales: faltan ${#missing[@]} de ${#want[@]}, instalando..."
+        sudo pacman -Syu --needed --noconfirm "${missing[@]}" || warn "Algún paquete oficial falló, continúo..."
+    fi
+else
+    warn "pkglist.txt no encontrado, salto paquetes oficiales."
+fi
+
+# --- 2. paru (AUR helper) si falta ---
 if ! command -v paru &>/dev/null; then
-    info "Installing paru (AUR helper)..."
-    sudo pacman -S --needed --noconfirm git base-devel
+    info "Instalando paru (AUR helper)..."
     tmpdir=$(mktemp -d)
     git clone https://aur.archlinux.org/paru.git "$tmpdir/paru"
     (cd "$tmpdir/paru" && makepkg -si --noconfirm)
     rm -rf "$tmpdir"
-fi
-
-# --- 3. AUR packages ---
-if [[ -f aur-pkglist.txt ]]; then
-    info "Installing AUR packages..."
-    paru -S --needed --noconfirm - < aur-pkglist.txt || warn "Some AUR packages failed, review manually."
 else
-    warn "aur-pkglist.txt not found, skipping AUR packages."
+    ok "paru ya instalado."
 fi
 
-# --- 4. Python tools via pipx ---
-if [[ -f pipx-pkglist.txt ]]; then
-    info "Installing Python tools via pipx..."
-    sudo pacman -S --needed --noconfirm python-pipx rust
-    while IFS= read -r tool; do
-        [[ -n "$tool" ]] && pipx install "$tool" || warn "pipx failed for $tool"
-    done < pipx-pkglist.txt
-    pipx ensurepath
-fi
-
-# --- 5. Deploy dotfiles with stow ---
-info "Deploying dotfiles with stow..."
-sudo pacman -S --needed --noconfirm stow
-
-for pkg in "${STOW_PACKAGES[@]}"; do
-    if [[ -d "$pkg" ]]; then
-        while IFS= read -r -d '' file; do
-            rel="${file#"$pkg"/}"
-            target="$HOME/$rel"
-            if [[ -e "$target" && ! -L "$target" ]]; then
-                warn "Backing up existing $target -> $target.bak"
-                mv "$target" "$target.bak"
-            fi
-        done < <(find "$pkg" -type f -print0)
-        stow -v "$pkg"
-        info "Stowed: $pkg"
+# --- 3. Paquetes AUR (paru) ---
+if [[ -f aur-pkglist.txt ]]; then
+    mapfile -t awant < <(grep -vE '^\s*(#|$)' aur-pkglist.txt)
+    amissing=()
+    for p in "${awant[@]}"; do
+        pacman -Qq "$p" &>/dev/null || amissing+=("$p")
+    done
+    if (( ${#amissing[@]} == 0 )); then
+        ok "Paquetes AUR: ya están los ${#awant[@]}."
     else
-        warn "Package dir '$pkg' not found, skipping."
+        info "Paquetes AUR: faltan ${#amissing[@]} de ${#awant[@]}, instalando..."
+        paru -S --needed --noconfirm "${amissing[@]}" || warn "Algún paquete AUR falló, revísalo a mano."
     fi
+else
+    warn "aur-pkglist.txt no encontrado, salto paquetes AUR."
+fi
+
+# --- 4. Herramientas Python (pipx) ---
+if [[ -f pipx-pkglist.txt ]]; then
+    sudo pacman -S --needed --noconfirm python-pipx rust >/dev/null
+    installed_pipx="$(pipx list --short 2>/dev/null | awk '{print $1}')"
+    while IFS= read -r tool; do
+        [[ -z "$tool" || "$tool" == \#* ]] && continue
+        if grep -qxF "$tool" <<<"$installed_pipx"; then
+            ok "pipx: $tool ya instalado."
+        else
+            info "pipx: instalando $tool..."
+            pipx install "$tool" || warn "pipx falló con $tool"
+        fi
+    done < pipx-pkglist.txt
+    pipx ensurepath >/dev/null 2>&1 || true
+else
+    warn "pipx-pkglist.txt no encontrado, salto herramientas pipx."
+fi
+
+# --- 5. Desplegar dotfiles con stow (idempotente) ---
+info "Desplegando dotfiles con stow..."
+for pkg in "${STOW_PACKAGES[@]}"; do
+    if [[ ! -d "$pkg" ]]; then
+        warn "Paquete stow '$pkg' no encontrado, se omite."
+        continue
+    fi
+    # Respaldar archivos reales (no symlinks) que estorben antes de enlazar.
+    while IFS= read -r -d '' file; do
+        rel="${file#"$pkg"/}"
+        target="$HOME/$rel"
+        if [[ -e "$target" && ! -L "$target" ]]; then
+            warn "Respaldo $target -> $target.bak"
+            mv "$target" "$target.bak"
+        fi
+    done < <(find "$pkg" -type f -print0)
+    stow -R -v "$pkg"   # -R (restow) = re-ejecutable sin romper nada
+    ok "Stow: $pkg"
 done
 
-# --- 6. Post-install notes ---
-info "Done!"
+# --- 6. Habilitar servicios ---
+enable_system_service() {
+    local unit="$1"
+    if systemctl cat "$unit" &>/dev/null; then
+        sudo systemctl enable --now "$unit" >/dev/null 2>&1 \
+            && ok "Servicio activo: $unit" \
+            || warn "No se pudo habilitar $unit (revísalo a mano)."
+    else
+        warn "$unit no está disponible en el sistema, se omite."
+    fi
+}
+
+enable_user_service() {
+    local unit="$1"
+    if systemctl --user cat "$unit" &>/dev/null; then
+        systemctl --user enable --now "$unit" >/dev/null 2>&1 \
+            && ok "Servicio de usuario activo: $unit" \
+            || warn "No se pudo habilitar (usuario) $unit."
+    fi
+}
+
+info "Habilitando servicios del sistema..."
+for s in "${SYSTEM_SERVICES[@]}"; do enable_system_service "$s"; done
+
+# vmtoolsd solo tiene sentido dentro de VMware.
+if [[ "$(systemd-detect-virt 2>/dev/null || echo none)" == "vmware" ]]; then
+    info "VM VMware detectada: habilitando integración..."
+    for s in "${VM_SERVICES[@]}"; do enable_system_service "$s"; done
+fi
+
+info "Habilitando servicios de usuario (audio)..."
+for s in "${USER_SERVICES[@]}"; do enable_user_service "$s"; done
+
+# Asegurar que el arranque va a modo gráfico (login manager) en cada reboot.
+info "Fijando graphical.target como objetivo de arranque por defecto..."
+sudo systemctl set-default graphical.target >/dev/null
+
+# --- 7. Fin ---
+ok "Listo."
 echo ""
-echo "  Next steps:"
-echo "  - Reboot or reload i3 (Super+Shift+R)"
-echo "  - Enable login manager: sudo systemctl enable lightdm"
-echo "  - Wallpaper is at ~/.config/wallpapers/ (referenced by i3 config)"
-echo "  - Open a new terminal so pipx PATH takes effect"
+echo "  La interfaz gráfica (lightdm) debería arrancar ya y en cada reboot."
+echo "  Si sigues en consola: 'sudo systemctl start lightdm' o reinicia."
+echo "  Notas:"
+echo "  - Recarga i3 con Super+Shift+R si ya estás dentro."
+echo "  - Abre una terminal nueva para que el PATH de pipx tenga efecto."
+echo "  - Wallpapers en ~/.config/wallpapers/ (usados por la config de i3)."
 echo ""
