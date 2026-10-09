@@ -1,5 +1,8 @@
+bloodyad
 certipy-ad
 evil-winrm-py
 impacket
 netexec
+pkinittools
 pywhisker
+targetedkerberoast
