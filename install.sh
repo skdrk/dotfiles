@@ -23,6 +23,35 @@ USER_SERVICES=(pipewire.socket pipewire-pulse.socket wireplumber.service)
 info() { printf '\033[1;34m==>\033[0m %s\n' "$1"; }
 warn() { printf '\033[1;33m==>\033[0m %s\n' "$1"; }
 ok()   { printf '\033[1;32m==>\033[0m %s\n' "$1"; }
+err()  { printf '\033[1;31m==>\033[0m %s\n' "$1"; }
+
+# Instala una lista con pacman de forma TOLERANTE: intenta el lote y, si falla
+# (un paquete inexistente o en conflicto aborta toda la transacción), reintenta
+# uno por uno para que un solo paquete malo no impida instalar el resto.
+pacman_install() {
+    (( $# == 0 )) && return 0
+    if sudo pacman -Syu --needed --noconfirm "$@"; then
+        return 0
+    fi
+    warn "El lote de pacman falló (algún paquete problemático). Reintento uno por uno..."
+    local p
+    for p in "$@"; do
+        sudo pacman -S --needed --noconfirm "$p" || warn "pacman: falló '$p', se omite."
+    done
+}
+
+# Igual pero con paru (AUR).
+paru_install() {
+    (( $# == 0 )) && return 0
+    if paru -S --needed --noconfirm "$@"; then
+        return 0
+    fi
+    warn "El lote de paru (AUR) falló. Reintento uno por uno..."
+    local p
+    for p in "$@"; do
+        paru -S --needed --noconfirm "$p" || warn "paru: falló '$p', se omite."
+    done
+}
 
 # --- 0. Comprobaciones previas ---
 if [[ $EUID -eq 0 ]]; then
@@ -44,7 +73,7 @@ if [[ -f pkglist.txt ]]; then
         ok "Paquetes oficiales: ya están los ${#want[@]}."
     else
         info "Paquetes oficiales: faltan ${#missing[@]} de ${#want[@]}, instalando..."
-        sudo pacman -Syu --needed --noconfirm "${missing[@]}" || warn "Algún paquete oficial falló, continúo..."
+        pacman_install "${missing[@]}"
     fi
 else
     warn "pkglist.txt no encontrado, salto paquetes oficiales."
@@ -72,7 +101,7 @@ if [[ -f aur-pkglist.txt ]]; then
         ok "Paquetes AUR: ya están los ${#awant[@]}."
     else
         info "Paquetes AUR: faltan ${#amissing[@]} de ${#awant[@]}, instalando..."
-        paru -S --needed --noconfirm "${amissing[@]}" || warn "Algún paquete AUR falló, revísalo a mano."
+        paru_install "${amissing[@]}"
     fi
 else
     warn "aur-pkglist.txt no encontrado, salto paquetes AUR."
@@ -153,7 +182,24 @@ for s in "${USER_SERVICES[@]}"; do enable_user_service "$s"; done
 info "Fijando graphical.target como objetivo de arranque por defecto..."
 sudo systemctl set-default graphical.target >/dev/null
 
-# --- 7. Fin ---
+# --- 7. Verificación del stack gráfico ---
+gui_missing=()
+for p in lightdm xorg-server i3-wm; do
+    pacman -Qq "$p" &>/dev/null || gui_missing+=("$p")
+done
+if (( ${#gui_missing[@]} > 0 )); then
+    err "ATENCIÓN: faltan paquetes críticos para la GUI: ${gui_missing[*]}"
+    err "Instálalos a mano y reintenta:  sudo pacman -S --needed ${gui_missing[*]}"
+    err "La interfaz gráfica NO arrancará hasta instalarlos."
+fi
+if [[ "$(systemd-detect-virt 2>/dev/null || echo none)" == "none" ]]; then
+    warn "Hardware real detectado (no VM): si la GUI no arranca puede faltar el driver de vídeo."
+    warn "  AMD: sudo pacman -S --needed mesa xf86-video-amdgpu vulkan-radeon"
+    warn "  Intel: sudo pacman -S --needed mesa vulkan-intel"
+    warn "  NVIDIA: sudo pacman -S --needed nvidia nvidia-utils"
+fi
+
+# --- 8. Fin ---
 ok "Listo."
 echo ""
 echo "  La interfaz gráfica (lightdm) debería arrancar ya y en cada reboot."
